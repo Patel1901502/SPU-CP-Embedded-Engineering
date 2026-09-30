@@ -1,0 +1,23 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "esp32-python-ml-embedded"
+version = "1.0.0"
+description = "Python-first ESP32 embedded monitoring with lightweight ML"
+requires-python = ">=3.10"
+dependencies = ["pyserial>=3.5", "numpy>=1.26", "pandas>=2.2", "scikit-learn>=1.5", "joblib>=1.4"]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0", "ruff>=0.8"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.setuptools]
+packages = ["host", "ml"]
