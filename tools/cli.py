@@ -1,20 +1,64 @@
+"""Command-line interface for interacting with the ESP32 monitoring device."""
+
 import argparse
+
 from host.device import EmbeddedDevice
 from host.telemetry import collect, save_csv
 
-def main():
-    p=argparse.ArgumentParser(); p.add_argument("--port",required=True)
-    s=p.add_subparsers(dest="command",required=True)
-    s.add_parser("ping"); s.add_parser("status"); s.add_parser("telemetry")
-    led=s.add_parser("led"); led.add_argument("state",choices=["on","off"])
-    c=s.add_parser("collect"); c.add_argument("--seconds",type=float,default=30); c.add_argument("--output",default="telemetry.csv")
-    a=p.parse_args()
-    with EmbeddedDevice(a.port) as d:
-        if a.command=="ping": print("PONG" if d.ping() else "FAIL")
-        elif a.command=="status": print(d.status())
-        elif a.command=="telemetry": print(d.telemetry())
-        elif a.command=="led": print(d.led(a.state=="on"))
-        elif a.command=="collect":
-            samples=collect(d,a.seconds); save_csv(samples,a.output); print(f"Saved {len(samples)} samples to {a.output}")
 
-if __name__=="__main__": main()
+def build_parser():
+    """Create and return the CLI argument parser."""
+    parser = argparse.ArgumentParser(
+        description="Communicate with the ESP32 monitoring platform over UART."
+    )
+    parser.add_argument(
+        "--port",
+        required=True,
+        help="Serial port, for example COM5 or /dev/ttyUSB0.",
+    )
+
+    # Subcommands map directly to common embedded-device operations.
+    subparsers = parser.add_subparsers(dest="command", required=True)
+    subparsers.add_parser("ping", help="Verify device communication.")
+    subparsers.add_parser("status", help="Read device status.")
+    subparsers.add_parser("telemetry", help="Read one telemetry sample.")
+
+    led_parser = subparsers.add_parser("led", help="Control the status LED.")
+    led_parser.add_argument("state", choices=["on", "off"])
+
+    collect_parser = subparsers.add_parser(
+        "collect", help="Collect telemetry for a period and save it to CSV."
+    )
+    collect_parser.add_argument(
+        "--seconds", type=float, default=30, help="Collection duration."
+    )
+    collect_parser.add_argument(
+        "--output", default="telemetry.csv", help="Output CSV path."
+    )
+
+    return parser
+
+
+def main():
+    """Execute the requested device command."""
+    args = build_parser().parse_args()
+
+    # The context manager guarantees that the serial port is closed even if a
+    # command raises an exception.
+    with EmbeddedDevice(args.port) as device:
+        if args.command == "ping":
+            print("PONG" if device.ping() else "FAIL")
+        elif args.command == "status":
+            print(device.status())
+        elif args.command == "telemetry":
+            print(device.telemetry())
+        elif args.command == "led":
+            print(device.led(args.state == "on"))
+        elif args.command == "collect":
+            samples = collect(device, args.seconds)
+            save_csv(samples, args.output)
+            print(f"Saved {len(samples)} samples to {args.output}")
+
+
+if __name__ == "__main__":
+    main()
