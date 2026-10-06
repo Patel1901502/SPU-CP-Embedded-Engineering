@@ -8,19 +8,29 @@ from .protocol import parse_response
 class EmbeddedDevice:
     """Small Python client for the ESP32 newline-based UART protocol."""
 
-    def __init__(self, port, baudrate=115200, timeout=1.0):
-        """Open a serial connection to the device.
+    def __init__(self, port=None, baudrate=115200, timeout=1.0, *, transport=None, close_transport=False):
+        """Use a serial port or a supplied write/readline/close transport.
+
+        Injected transports are caller-owned unless close_transport=True.
+        This supports loopback, network adapters, and tests without opening UART.
 
         Args:
             port: Serial port name, for example ``COM5`` or ``/dev/ttyUSB0``.
             baudrate: UART baud rate; must match the firmware configuration.
             timeout: Maximum seconds to wait for a response line.
         """
-        self.serial = serial.Serial(port, baudrate=baudrate, timeout=timeout)
+        if transport is None:
+            if port is None:
+                raise ValueError("port is required when no transport is supplied")
+            transport = serial.Serial(port, baudrate=baudrate, timeout=timeout)
+            close_transport = True
+        self.serial = transport
+        self._close_transport = close_transport
 
     def close(self):
         """Close the underlying serial port."""
-        self.serial.close()
+        if self._close_transport:
+            self.serial.close()
 
     def __enter__(self):
         """Support ``with EmbeddedDevice(...) as device`` usage."""
@@ -32,6 +42,9 @@ class EmbeddedDevice:
 
     def command(self, command):
         """Send one command and parse the device's single-line response."""
+        if "\n" in command or "\r" in command:
+            raise ValueError("command must contain exactly one line")
+
         # Firmware expects every command to be terminated by a newline.
         self.serial.write((command + "\n").encode())
 

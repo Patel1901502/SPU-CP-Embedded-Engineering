@@ -20,4 +20,9 @@ line-length = 100
 target-version = "py310"
 
 [tool.setuptools]
-packages = ["host", "ml"]
+packages = ["host", "ml", "tools"]
+
+[project.scripts]
+embedded-device = "tools.cli:main"
+embedded-train = "ml.train:main"
+embedded-infer = "ml.infer:main"

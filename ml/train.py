@@ -4,9 +4,10 @@ import argparse
 
 import joblib
 import pandas as pd
-from sklearn.ensemble import IsolationForest
 
-from features import feature_matrix
+
+from ml.features import FEATURE_COLUMNS
+from ml.model import train_model
 
 
 def main():
@@ -29,23 +30,13 @@ def main():
     # Load telemetry and apply exactly the same feature engineering used later
     # by inference. Sharing feature_matrix() prevents training/serving skew.
     dataframe = pd.read_csv(args.input)
-    features = feature_matrix(dataframe)
-
-    # IsolationForest is a lightweight unsupervised anomaly detector. It works
-    # well for this demo because labeled failure data is not required.
-    # contamination=0.03 tells the model to expect roughly 3% anomalies.
-    model = IsolationForest(
-        n_estimators=100,
-        contamination=0.03,
-        random_state=42,
-    )
-    model.fit(features)
+    model = train_model(dataframe)
 
     # joblib serializes the trained scikit-learn model for later inference.
     joblib.dump(model, args.output)
 
-    print(f"Training samples: {len(features)}")
-    print(f"Features: {list(features.columns)}")
+    print(f"Training samples: {len(dataframe)}")
+    print(f"Features: {FEATURE_COLUMNS}")
     print(f"Model saved to {args.output}")
 
 

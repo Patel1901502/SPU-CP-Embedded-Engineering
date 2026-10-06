@@ -1,46 +1,44 @@
-"""Utilities for collecting device telemetry and saving it as CSV."""
-
+"""Reusable streaming acquisition and CSV export."""
 import csv
 import time
 from pathlib import Path
 
 
-def collect(device, seconds, interval=1.0):
-    """Collect telemetry samples for a requested duration.
+def iter_samples(device, seconds, interval=1.0, *, clock=time.monotonic,
+                 timestamp=time.time, sleep=time.sleep):
+    """Yield telemetry without accumulating it in memory.
 
-    ``time.monotonic`` is used for duration measurement because it cannot jump
-    backward/forward when the system wall clock is adjusted.
+    device needs only telemetry(); timing functions can be injected for tests.
+    Collection stops between requests; a blocking transport may exceed duration.
+    Device error packets are skipped, matching the original collector.
     """
-    samples = []
-    deadline = time.monotonic() + seconds
+    if seconds < 0 or interval <= 0:
+        raise ValueError("seconds must be nonnegative and interval positive")
+    deadline = clock() + seconds
+    while clock() < deadline:
+        packet = device.telemetry()
+        if packet["type"] == "telemetry":
+            sample = {key: value for key, value in packet.items() if key != "type"}
+            sample["timestamp"] = timestamp()
+            yield sample
+        remaining = deadline - clock()
+        if remaining > 0:
+            sleep(min(interval, remaining))
 
-    while time.monotonic() < deadline:
-        sample = device.telemetry()
 
-        # Only valid telemetry packets are stored. Protocol errors remain the
-        # responsibility of the caller/device layer.
-        if sample["type"] == "telemetry":
-            sample.pop("type", None)
-
-            # Unix wall-clock time is useful when correlating exported samples
-            # with logs or other system events.
-            sample["timestamp"] = time.time()
-            samples.append(sample)
-
-        time.sleep(interval)
-
-    return samples
+def collect(device, seconds, interval=1.0, **timing):
+    """Backward-compatible list collector built on the streaming API."""
+    return list(iter_samples(device, seconds, interval, **timing))
 
 
 def save_csv(samples, output):
-    """Write collected telemetry samples to *output* as a CSV file."""
-    if not samples:
-        # Avoid creating an empty CSV with no meaningful column definition.
+    """Write a list or single-pass iterator; leave output untouched if empty."""
+    samples = iter(samples)
+    first = next(samples, None)
+    if first is None:
         return
-
-    output_path = Path(output)
-    with output_path.open("w", newline="", encoding="utf-8") as csv_file:
-        # All samples are expected to have the same keys as the first sample.
-        writer = csv.DictWriter(csv_file, fieldnames=samples[0].keys())
+    with Path(output).open("w", newline="", encoding="utf-8") as csv_file:
+        writer = csv.DictWriter(csv_file, fieldnames=list(first))
         writer.writeheader()
+        writer.writerow(first)
         writer.writerows(samples)

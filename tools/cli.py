@@ -3,7 +3,7 @@
 import argparse
 
 from host.device import EmbeddedDevice
-from host.telemetry import collect, save_csv
+from host.telemetry import iter_samples, save_csv
 
 
 def build_parser():
@@ -16,6 +16,9 @@ def build_parser():
         required=True,
         help="Serial port, for example COM5 or /dev/ttyUSB0.",
     )
+
+    parser.add_argument("--baudrate", type=int, default=115200)
+    parser.add_argument("--timeout", type=float, default=1.0)
 
     # Subcommands map directly to common embedded-device operations.
     subparsers = parser.add_subparsers(dest="command", required=True)
@@ -36,6 +39,7 @@ def build_parser():
         "--output", default="telemetry.csv", help="Output CSV path."
     )
 
+    collect_parser.add_argument("--interval", type=float, default=1.0)
     return parser
 
 
@@ -45,7 +49,7 @@ def main():
 
     # The context manager guarantees that the serial port is closed even if a
     # command raises an exception.
-    with EmbeddedDevice(args.port) as device:
+    with EmbeddedDevice(args.port, baudrate=args.baudrate, timeout=args.timeout) as device:
         if args.command == "ping":
             print("PONG" if device.ping() else "FAIL")
         elif args.command == "status":
@@ -55,9 +59,9 @@ def main():
         elif args.command == "led":
             print(device.led(args.state == "on"))
         elif args.command == "collect":
-            samples = collect(device, args.seconds)
+            samples = iter_samples(device, args.seconds, args.interval)
             save_csv(samples, args.output)
-            print(f"Saved {len(samples)} samples to {args.output}")
+            print(f"Collection complete: {args.output}")
 
 
 if __name__ == "__main__":

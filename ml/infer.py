@@ -5,7 +5,7 @@ import argparse
 import joblib
 import pandas as pd
 
-from features import feature_matrix
+from ml.model import score_samples
 
 
 def main():
@@ -21,18 +21,7 @@ def main():
     # pipeline used during training.
     model = joblib.load(args.model)
     dataframe = pd.read_csv(args.input)
-    features = feature_matrix(dataframe)
-
-    # IsolationForest predicts +1 for inliers and -1 for anomalies.
-    predictions = model.predict(features)
-
-    # decision_function provides a continuous score. Lower/more-negative values
-    # indicate samples that the model considers more unusual.
-    scores = model.decision_function(features)
-
-    output = dataframe.copy()
-    output["anomaly"] = pd.Series(predictions).map({1: "NORMAL", -1: "ANOMALY"})
-    output["score"] = scores
+    output = score_samples(model, dataframe)
 
     display_columns = [
         "temp_c",
@@ -42,7 +31,7 @@ def main():
         "score",
     ]
     print(output[display_columns].to_string(index=False))
-    print(f"Anomalies detected: {(predictions == -1).sum()} / {len(predictions)}")
+    print(f'Anomalies detected: {(output["anomaly"] == "ANOMALY").sum()} / {len(output)}')
 
 
 if __name__ == "__main__":
