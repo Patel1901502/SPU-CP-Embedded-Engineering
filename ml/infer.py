@@ -10,9 +10,7 @@ from ml.model import score_samples
 
 def main():
     """Load model/data, classify each sample, and print anomaly results."""
-    parser = argparse.ArgumentParser(
-        description="Detect anomalous embedded telemetry samples."
-    )
+    parser = argparse.ArgumentParser(description="Detect anomalous embedded telemetry samples.")
     parser.add_argument("--model", required=True, help="Path to model.joblib.")
     parser.add_argument("--input", required=True, help="Telemetry CSV to score.")
     args = parser.parse_args()
@@ -31,7 +29,7 @@ def main():
         "score",
     ]
     print(output[display_columns].to_string(index=False))
-    print(f'Anomalies detected: {(output["anomaly"] == "ANOMALY").sum()} / {len(output)}')
+    print(f"Anomalies detected: {(output['anomaly'] == 'ANOMALY').sum()} / {len(output)}")
 
 
 if __name__ == "__main__":

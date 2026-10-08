@@ -1,0 +1,6 @@
+include README.md LICENSE
+recursive-include device *.py
+recursive-include docs *.md
+recursive-include tests *.py
+recursive-include .github *.yml
+recursive-include tools/data *.csv

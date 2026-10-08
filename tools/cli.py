@@ -32,12 +32,8 @@ def build_parser():
     collect_parser = subparsers.add_parser(
         "collect", help="Collect telemetry for a period and save it to CSV."
     )
-    collect_parser.add_argument(
-        "--seconds", type=float, default=30, help="Collection duration."
-    )
-    collect_parser.add_argument(
-        "--output", default="telemetry.csv", help="Output CSV path."
-    )
+    collect_parser.add_argument("--seconds", type=float, default=30, help="Collection duration.")
+    collect_parser.add_argument("--output", default="telemetry.csv", help="Output CSV path.")
 
     collect_parser.add_argument("--interval", type=float, default=1.0)
     return parser

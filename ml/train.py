@@ -5,7 +5,6 @@ import argparse
 import joblib
 import pandas as pd
 
-
 from ml.features import FEATURE_COLUMNS
 from ml.model import train_model
 

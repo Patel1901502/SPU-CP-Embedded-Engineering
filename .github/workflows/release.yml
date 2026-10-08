@@ -1,0 +1,40 @@
+name: Tagged release
+on:
+  push:
+    tags: ['v*']
+permissions:
+  contents: write
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install ".[dev]"
+      - name: Check tag matches package version
+        run: python -c "import os, importlib.metadata as m; assert os.environ['GITHUB_REF_NAME'] == 'v' + m.version('esp32-python-ml-embedded')"
+      - run: ruff check .
+      - run: ruff format --check .
+      - run: python -m build
+      - run: python -m twine check dist/*
+      - run: python -m pip install --force-reinstall --no-deps dist/*.whl
+      - run: python -m pip check
+      - name: Validate installed wheel and demo
+        run: |
+          cp -r tests "$RUNNER_TEMP/embedded-tests"
+          cp pyproject.toml "$RUNNER_TEMP/pyproject.toml"
+          cd "$RUNNER_TEMP"
+          python -m pytest embedded-tests -q --import-mode=importlib
+          embedded-demo --output demo-output
+      - name: Assemble demonstration asset
+        run: |
+          cp -r "$RUNNER_TEMP/demo-output" demo-output
+          zip -r dist/demo-v2.0.0.zip demo-output tools/data docs README.md
+          cd dist
+          sha256sum * > SHA256SUMS
+      - name: Publish GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "$GITHUB_REF_NAME" dist/* --verify-tag --title "$GITHUB_REF_NAME — Automated Validation and Release" --notes-file docs/RELEASE_NOTES.md

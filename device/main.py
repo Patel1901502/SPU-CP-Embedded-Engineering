@@ -6,9 +6,9 @@ responses containing status, telemetry, or command results.
 """
 
 import time
-from machine import Pin, UART
 
 import config
+from machine import UART, Pin
 from protocol import handle_command
 from sensors import SensorSuite
 
@@ -49,7 +49,7 @@ def main():
                     # Keep the firmware alive if one malformed command or sensor
                     # operation fails. Production firmware should also log/count
                     # faults and avoid exposing sensitive exception information.
-                    uart.write("ERR INTERNAL={}\r\n".format(exc))
+                    uart.write(f"ERR INTERNAL={exc}\r\n")
 
         # A short sleep prevents this polling loop from consuming 100% CPU.
         time.sleep_ms(10)

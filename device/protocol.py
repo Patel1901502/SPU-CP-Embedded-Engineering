@@ -40,10 +40,9 @@ def handle_command(command, sensors, led):
     if command == "TELEMETRY":
         # Take a fresh sensor snapshot only when telemetry is requested.
         sample = sensors.read()
-        return (
-            "TEL temp_c={temp_c},vibration={vibration},"
-            "current_ma={current_ma}"
-        ).format(**sample)
+        return ("TEL temp_c={temp_c},vibration={vibration},current_ma={current_ma}").format(
+            **sample
+        )
 
     if command == "LED ON":
         led.value(1)

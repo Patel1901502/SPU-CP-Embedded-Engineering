@@ -1,11 +1,13 @@
 """Reusable streaming acquisition and CSV export."""
+
 import csv
 import time
 from pathlib import Path
 
 
-def iter_samples(device, seconds, interval=1.0, *, clock=time.monotonic,
-                 timestamp=time.time, sleep=time.sleep):
+def iter_samples(
+    device, seconds, interval=1.0, *, clock=time.monotonic, timestamp=time.time, sleep=time.sleep
+):
     """Yield telemetry without accumulating it in memory.
 
     device needs only telemetry(); timing functions can be injected for tests.

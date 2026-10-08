@@ -8,7 +8,9 @@ from .protocol import parse_response
 class EmbeddedDevice:
     """Small Python client for the ESP32 newline-based UART protocol."""
 
-    def __init__(self, port=None, baudrate=115200, timeout=1.0, *, transport=None, close_transport=False):
+    def __init__(
+        self, port=None, baudrate=115200, timeout=1.0, *, transport=None, close_transport=False
+    ):
         """Use a serial port or a supplied write/readline/close transport.
 
         Injected transports are caller-owned unless close_transport=True.

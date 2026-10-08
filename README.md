@@ -1,92 +1,102 @@
-# ESP32 Python + Tiny ML Embedded Monitoring Platform
+# ESP32 Python + ML Embedded Monitoring — v2.0.0
 
-GitHub-ready portfolio project combining Python-first ESP32 MicroPython firmware, UART telemetry, pytest, and lightweight scikit-learn anomaly detection.
+Python host tools, MicroPython ESP32 firmware, and lightweight PC-side anomaly
+ detection. A hardware-free demonstration is included.
 
-## Architecture
-PC Python -> USB/UART -> ESP32 MicroPython -> sensors/GPIO
-PC Python also performs feature extraction and IsolationForest anomaly detection.
+## Fresh setup
 
-## Layout
-- `device/`: MicroPython firmware
-- `host/`: Python serial/device API
-- `ml/`: feature engineering, training, inference
-- `tests/`: pytest unit/mock/ML tests
-- `tools/`: device CLI
+Use Python 3.10+ (CI checks 3.10, 3.12, 3.13 on Linux and Windows).
+From the extracted project directory:
 
-## Hardware
-ESP32 development board + USB cable. External sensors are optional; the included firmware uses a deterministic simulated sensor backend. Replace `device/sensors.py` with I2C/ADC sensor reads for real hardware.
-
-## ESP32
-Install MicroPython, then copy:
-```bash
-mpremote connect COM5 cp device/*.py :
-```
-Linux/macOS:
-```bash
-mpremote connect /dev/ttyUSB0 cp device/*.py :
-```
-
-## Python
-```bash
+```sh
 python -m venv .venv
-# Windows: .venv\Scripts\activate
-# Linux/macOS: source .venv/bin/activate
-pip install -e ".[dev]"
-pytest
 ```
 
-## Train ML model
-```bash
-python -m ml.train --input telemetry.csv --output model.joblib
-python -m ml.infer --model model.joblib --input telemetry.csv
+Activate with `source .venv/bin/activate` on Linux/macOS, or
+`.venv\Scripts\Activate.ps1` in Windows PowerShell.
+
+```sh
+python -m pip install --upgrade pip
+python -m pip install ".[dev]"
+python -m pip check
+ruff check .
+ruff format --check .
+python -m pytest -q
+embedded-demo --output demo-output
 ```
 
-The model uses an IsolationForest on temperature, vibration, current, and temperature delta. It is deliberately lightweight and demonstrates an embedded-monitoring ML pipeline rather than requiring neural-network deployment on the MCU.
+Expected demo summary: 200 training samples, 40 evaluation samples, and
+`injected_faults_detected: 5`. The command checks all five injected faults and
+writes `model.joblib`, `predictions.csv`, and `summary.json`. Total anomalies may
+vary with dependency versions. Input data in `tools/data/` is synthetic; no board,
+network service, or previously collected telemetry is needed.
 
-## CLI
-```bash
-python -m tools.cli --port COM5 ping
-python -m tools.cli --port COM5 status
-python -m tools.cli --port COM5 telemetry
-python -m tools.cli --port COM5 collect --seconds 60 --output telemetry.csv
+## Validate distributable installation
+
+```sh
+python -m build
+python -m twine check dist/*
 ```
 
-## UART commands
-`PING`, `STATUS`, `TELEMETRY`, `LED ON`, `LED OFF`
+Create a second clean virtual environment, install the generated wheel from
+`dist/` using its full path, then run `embedded-demo` from another directory.
+CI performs this outside-checkout wheel verification and tests all installed
+entry points. A source installation cannot substitute for this check.
 
-## Engineering flow
-Sensor -> embedded acquisition -> UART telemetry -> Python collection -> feature extraction -> ML anomaly detection -> automated tests -> CI.
+## CLI and training
 
-## Resume bullet
-> Built a Python-first ESP32 embedded monitoring platform using MicroPython, UART telemetry, automated pytest validation, and a lightweight scikit-learn anomaly-detection pipeline to identify abnormal temperature, vibration, and current behavior; integrated testing and ML training into GitHub Actions CI.
-
-## Reusing the components
-
-```python
-from host.device import EmbeddedDevice
-from host.telemetry import iter_samples, save_csv
-from ml.model import train_model, score_samples
-import pandas as pd
-
-with EmbeddedDevice("COM5") as device:
-    save_csv(iter_samples(device, seconds=60, interval=0.5), "telemetry.csv")
-
-frame = pd.read_csv("telemetry.csv")
-model = train_model(frame, contamination=0.05, n_estimators=200)
-scored = score_samples(model, frame)
+```sh
+embedded-device --port COM5 ping
+embedded-device --port COM5 status
+embedded-device --port COM5 collect --seconds 60 --output telemetry.csv
+embedded-train --input tools/data/training.csv --output model.joblib
+embedded-infer --model model.joblib --input tools/data/evaluation.csv
 ```
 
-An alternative transport can be supplied with `EmbeddedDevice(transport=adapter)`.
-The adapter implements `write(bytes)`, `readline()` returning bytes, and `close()`.
-Injected adapters remain caller-owned; set `close_transport=True` to transfer
-ownership to the client. Existing `EmbeddedDevice(port)` calls still work.
+Replace COM5 with your port. Every command supports `--help`.
+`embedded-demo` demonstrates ML without hardware. See
+[architecture](docs/ARCHITECTURE.md) and [troubleshooting](docs/TROUBLESHOOTING.md).
 
-`iter_samples` accepts `clock`, `timestamp`, and `sleep` functions for deterministic
-tests. It never mutates the device's response dictionary. `collect` remains available
-when a list is needed. `save_csv` accepts generators and avoids buffering all rows.
+## ESP32 setup and opt-in integration checks
 
-Installed entry points: `embedded-device`, `embedded-train`, `embedded-infer`.
-Use module invocation (`python -m ...`) from the project root without installation.
-Firmware deployment remains unchanged; this refactor targets host acquisition and ML.
-Hardware validation on an ESP32 is still required. No sample dataset or CI workflow
-is bundled in this archive; collect telemetry before running the training example.
+Install MicroPython appropriate for your ESP32 board, then install `mpremote`
+on the PC (`python -m pip install mpremote`). Copy each firmware file explicitly
+so the command also works in PowerShell:
+
+```sh
+mpremote connect COM5 cp device/boot.py device/config.py device/main.py device/protocol.py device/sensors.py :
+```
+
+Reset the board and close mpremote before testing. Confirm the LED pin in
+`device/config.py`. The default sensor backend is simulated. UART0/USB console
+sharing depends on the board; see troubleshooting if it returns boot/REPL text.
+
+```sh
+python -m pytest tests/hardware -q --hardware --port COM5
+```
+
+Tests check PING, READY status, and finite telemetry. They are skipped by default;
+`--hardware` without `--port` fails explicitly. No real ESP32 was available for
+local verification. Firmware deployment and board validation are manual.
+
+## Publish the release
+
+Commit this project, including `.github/workflows`, to your GitHub repository.
+Wait for automated validation to pass, then run:
+
+```sh
+git tag -a v2.0.0 -m "v2.0.0 Automated Validation and Release"
+git push origin v2.0.0
+```
+
+The tagged workflow validates the built wheel before creating the GitHub release
+with wheel, source distribution, synthetic datasets, demo output, docs, and
+checksums. GitHub Actions requires contents-write permission. The ZIP prepares
+this release; it does not itself push a tag or publish on GitHub.
+
+## Reusable APIs
+
+`EmbeddedDevice(transport=adapter)` accepts write/readline/close transports.
+Injected transports remain caller-owned unless `close_transport=True`.
+`iter_samples` streams telemetry, and `save_csv` accepts generators.
+`train_model` and `score_samples` share feature engineering and preserve inputs.

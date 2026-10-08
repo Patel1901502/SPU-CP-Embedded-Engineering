@@ -4,16 +4,18 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "esp32-python-ml-embedded"
-version = "1.0.0"
+version = "2.0.0"
 description = "Python-first ESP32 embedded monitoring with lightweight ML"
+readme = "README.md"
 requires-python = ">=3.10"
 dependencies = ["pyserial>=3.5", "numpy>=1.26", "pandas>=2.2", "scikit-learn>=1.5", "joblib>=1.4"]
 
 [project.optional-dependencies]
-dev = ["pytest>=8.0", "ruff>=0.8"]
+dev = ["pytest>=8.0", "ruff>=0.8", "build>=1.2", "twine>=5"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+markers = ["hardware: opt-in tests requiring a flashed ESP32"]
 
 [tool.ruff]
 line-length = 100
@@ -23,6 +25,13 @@ target-version = "py310"
 packages = ["host", "ml", "tools"]
 
 [project.scripts]
+embedded-demo = "tools.demo:main"
 embedded-device = "tools.cli:main"
 embedded-train = "ml.train:main"
 embedded-infer = "ml.infer:main"
+
+[tool.setuptools.package-data]
+tools = ["data/*.csv"]
+
+[tool.ruff.lint]
+select = ["E4", "E7", "E9", "F", "I"]

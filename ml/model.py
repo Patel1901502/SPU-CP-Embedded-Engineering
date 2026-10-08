@@ -1,12 +1,15 @@
 """Callable ML operations independent of argument parsing and file I/O."""
+
 from sklearn.ensemble import IsolationForest
+
 from .features import feature_matrix
 
 
 def train_model(dataframe, *, n_estimators=100, contamination=0.03, random_state=42):
     """Fit an anomaly detector with configurable training parameters."""
-    model = IsolationForest(n_estimators=n_estimators,
-                            contamination=contamination, random_state=random_state)
+    model = IsolationForest(
+        n_estimators=n_estimators, contamination=contamination, random_state=random_state
+    )
     return model.fit(feature_matrix(dataframe))
 
 

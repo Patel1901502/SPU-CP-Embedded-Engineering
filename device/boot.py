@@ -6,6 +6,7 @@ hardware reaches a known state before the application starts.
 """
 
 import gc
+
 import machine
 
 # Run the ESP32 CPU at 160 MHz. This is a reasonable balance between
