@@ -29,6 +29,7 @@ embedded-demo = "tools.demo:main"
 embedded-device = "tools.cli:main"
 embedded-train = "ml.train:main"
 embedded-infer = "ml.infer:main"
+embedded-evaluate = "ml.evaluate:main"
 
 [tool.setuptools.package-data]
 tools = ["data/*.csv"]

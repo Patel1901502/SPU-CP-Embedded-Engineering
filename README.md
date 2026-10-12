@@ -100,3 +100,14 @@ this release; it does not itself push a tag or publish on GitHub.
 Injected transports remain caller-owned unless `close_transport=True`.
 `iter_samples` streams telemetry, and `save_csv` accepts generators.
 `train_model` and `score_samples` share feature engineering and preserve inputs.
+
+## v1.4 — Reproducible ML Pipeline
+
+See [ML pipeline guide](docs/ML_PIPELINE.md) for input validation, persisted
+training metadata, batch temperature-delta behavior, labeled held-out evaluation,
+and scored CSV export.
+
+```sh
+embedded-evaluate --model model.joblib --input tools/data/evaluation.csv --output evaluation-scored.csv --metrics metrics.json
+embedded-infer --model model.joblib --input tools/data/evaluation.csv --batch-size 7 --output predictions.csv
+```

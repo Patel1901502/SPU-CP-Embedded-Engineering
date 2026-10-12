@@ -1,34 +1,36 @@
-"""Run anomaly detection on telemetry using a previously trained model."""
+"""Score telemetry and optionally export all original columns, delta and scores."""
 
 import argparse
 
-import joblib
 import pandas as pd
 
-from ml.model import score_samples
+from ml.model import InferenceSession, load_model
 
 
 def main():
-    """Load model/data, classify each sample, and print anomaly results."""
-    parser = argparse.ArgumentParser(description="Detect anomalous embedded telemetry samples.")
-    parser.add_argument("--model", required=True, help="Path to model.joblib.")
-    parser.add_argument("--input", required=True, help="Telemetry CSV to score.")
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--model", required=True)
+    parser.add_argument("--input", required=True)
+    parser.add_argument("--output", help="Scored CSV destination")
+    parser.add_argument("--batch-size", type=int, help="Rows per ordered inference batch")
+    parser.add_argument("--previous-temp", type=float, help="Last temperature of same stream")
     args = parser.parse_args()
-
-    # Load the fitted model and transform input telemetry using the same feature
-    # pipeline used during training.
-    model = joblib.load(args.model)
+    if args.batch_size is not None and args.batch_size <= 0:
+        parser.error("--batch-size must be positive")
     dataframe = pd.read_csv(args.input)
-    output = score_samples(model, dataframe)
-
-    display_columns = [
-        "temp_c",
-        "vibration",
-        "current_ma",
-        "anomaly",
-        "score",
-    ]
-    print(output[display_columns].to_string(index=False))
+    session = InferenceSession(load_model(args.model), previous_temp=args.previous_temp)
+    size = args.batch_size or max(len(dataframe), 1)
+    if dataframe.empty:
+        parser.error("input must contain telemetry rows")
+    output = pd.concat(
+        [
+            session.score(dataframe.iloc[start : start + size])
+            for start in range(0, len(dataframe), size)
+        ]
+    )
+    if args.output:
+        output.to_csv(args.output, index=False)
+    print(output.to_string(index=False))
     print(f"Anomalies detected: {(output['anomaly'] == 'ANOMALY').sum()} / {len(output)}")
 
 

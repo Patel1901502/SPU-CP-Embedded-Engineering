@@ -1,41 +1,33 @@
-"""Train and persist the telemetry anomaly-detection model."""
+"""Train a versioned anomaly detector and save its reproducibility metadata."""
 
 import argparse
+import json
+from pathlib import Path
 
-import joblib
 import pandas as pd
 
-from ml.features import FEATURE_COLUMNS
-from ml.model import train_model
+from ml.model import save_model, train_model
 
 
 def main():
-    """Parse CLI arguments, train IsolationForest, and save the model."""
-    parser = argparse.ArgumentParser(
-        description="Train an IsolationForest model on embedded telemetry."
-    )
-    parser.add_argument(
-        "--input",
-        required=True,
-        help="CSV containing temp_c, vibration, and current_ma columns.",
-    )
-    parser.add_argument(
-        "--output",
-        default="model.joblib",
-        help="Destination path for the trained model (default: model.joblib).",
-    )
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--input", required=True)
+    parser.add_argument("--output", default="model.joblib")
+    parser.add_argument("--n-estimators", type=int, default=100)
+    parser.add_argument("--contamination", type=float, default=0.03)
+    parser.add_argument("--random-state", type=int, default=42)
     args = parser.parse_args()
-
-    # Load telemetry and apply exactly the same feature engineering used later
-    # by inference. Sharing feature_matrix() prevents training/serving skew.
-    dataframe = pd.read_csv(args.input)
-    model = train_model(dataframe)
-
-    # joblib serializes the trained scikit-learn model for later inference.
-    joblib.dump(model, args.output)
-
-    print(f"Training samples: {len(dataframe)}")
-    print(f"Features: {FEATURE_COLUMNS}")
+    model = train_model(
+        pd.read_csv(args.input),
+        n_estimators=args.n_estimators,
+        contamination=args.contamination,
+        random_state=args.random_state,
+    )
+    save_model(model, args.output)
+    Path(str(args.output) + ".metadata.json").write_text(
+        json.dumps(model.metadata, indent=2) + "\n", encoding="utf-8"
+    )
+    print(f"Training samples: {model.metadata['training_samples']}")
     print(f"Model saved to {args.output}")
 
 

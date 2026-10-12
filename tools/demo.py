@@ -5,10 +5,10 @@ import json
 from importlib.resources import files
 from pathlib import Path
 
-import joblib
 import pandas as pd
 
-from ml.model import score_samples, train_model
+from ml.evaluate import evaluate_model
+from ml.model import save_model, train_model
 
 
 def run_demo(output):
@@ -17,11 +17,13 @@ def run_demo(output):
     training = pd.read_csv(files("tools").joinpath("data/training.csv"))
     evaluation = pd.read_csv(files("tools").joinpath("data/evaluation.csv"))
     model = train_model(training)
-    scored = score_samples(model, evaluation)
-    joblib.dump(model, output / "model.joblib")
+    scored, metrics = evaluate_model(model, evaluation)
+    save_model(model, output / "model.joblib")
+    (output / "model.metadata.json").write_text(json.dumps(model.metadata, indent=2) + "\n")
+    (output / "metrics.json").write_text(json.dumps(metrics, indent=2) + "\n")
     scored.to_csv(output / "predictions.csv", index=False)
     # The last five samples deliberately contain large injected faults.
-    faults = int((scored.tail(5)["anomaly"] == "ANOMALY").sum())
+    faults = metrics["true_positives"]
     if faults != 5:
         raise RuntimeError(f"Demo detected {faults}/5 injected faults")
     summary = {

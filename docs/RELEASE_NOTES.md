@@ -9,3 +9,10 @@ GitHub release workflow with distributions, demo output, and SHA256 checksums.
 Hardware tests require a flashed ESP32 and were not run in the build environment.
 The included sensor backend and demo data are simulated. No real sensor accuracy
 or on-device ML performance is claimed.
+
+## Reproducible ML Pipeline (v1.4 milestone)
+
+Validated finite input, persisted versioned model metadata, explicit stream delta
+state, independent labeled evaluation and scored CSV export. Added installed
+`embedded-evaluate` command, reproducibility pins and regression tests. Restored
+missing synthetic demo datasets. Old bare-estimator artifacts require retraining.
