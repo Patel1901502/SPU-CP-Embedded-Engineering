@@ -11,7 +11,18 @@ UART_BAUDRATE = 115200
 # Change this value if your board uses a different pin.
 LED_PIN = 2
 
-# Nominal sensor sampling period in milliseconds. The current command-driven
-# demo reads sensors on demand, but this constant is useful when extending the
-# firmware to periodic/background telemetry.
+# Minimum interval between real sensor requests in milliseconds.
+# Sampling is command-driven; requests faster than this return RATE_LIMIT.
 SAMPLE_PERIOD_MS = 1000
+
+
+# Real hardware is the default; simulation must be selected explicitly.
+SENSOR_BACKEND = "tmp102"  # "tmp102" or "simulated"
+I2C_ID = 0
+I2C_SDA_PIN = 21
+I2C_SCL_PIN = 22
+I2C_FREQ_HZ = 100000
+TMP102_ADDRESS = 0x48
+# calibrated_c = raw_c * TEMP_SCALE + TEMP_OFFSET_C
+TEMP_SCALE = 1.0
+TEMP_OFFSET_C = 0.0

@@ -37,12 +37,18 @@ def handle_command(command, sensors, led):
         # uptime, etc.) can be added here as the embedded application grows.
         return "OK STATUS=READY"
 
+    if command == "SENSOR_INFO":
+        import json
+
+        return "INFO " + json.dumps(sensors.info())
+
     if command == "TELEMETRY":
         # Take a fresh sensor snapshot only when telemetry is requested.
-        sample = sensors.read()
-        return ("TEL temp_c={temp_c},vibration={vibration},current_ma={current_ma}").format(
-            **sample
-        )
+        try:
+            sample = sensors.read()
+        except Exception as exc:
+            return "ERR SENSOR=" + str(exc).replace("\n", " ").replace("\r", " ")
+        return "TEL " + ",".join("{}={}".format(key, value) for key, value in sample.items())
 
     if command == "LED ON":
         led.value(1)

@@ -68,14 +68,14 @@ mpremote connect COM5 cp device/boot.py device/config.py device/main.py device/p
 ```
 
 Reset the board and close mpremote before testing. Confirm the LED pin in
-`device/config.py`. The default sensor backend is simulated. UART0/USB console
+`device/config.py`. The default sensor backend is the real TMP102 I2C temperature sensor. UART0/USB console
 sharing depends on the board; see troubleshooting if it returns boot/REPL text.
 
 ```sh
 python -m pytest tests/hardware -q --hardware --port COM5
 ```
 
-Tests check PING, READY status, and finite telemetry. They are skipped by default;
+Tests check PING, READY status, and finite real temperature telemetry. They are skipped by default;
 `--hardware` without `--port` fails explicitly. No real ESP32 was available for
 local verification. Firmware deployment and board validation are manual.
 
@@ -111,3 +111,10 @@ and scored CSV export.
 embedded-evaluate --model model.joblib --input tools/data/evaluation.csv --output evaluation-scored.csv --metrics metrics.json
 embedded-infer --model model.joblib --input tools/data/evaluation.csv --batch-size 7 --output predictions.csv
 ```
+
+## Real Sensor Integration
+
+See [wiring, calibration, sampling and real capture](docs/REAL_SENSOR.md).
+Real hardware emits only `temp_c` and `raw_temp_c`; no synthetic vibration or
+current values are added. The existing three-channel ML demo remains synthetic
+and cannot consume temperature-only captures without adapting its features.

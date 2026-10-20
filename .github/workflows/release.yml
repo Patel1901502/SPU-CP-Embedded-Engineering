@@ -23,6 +23,7 @@ jobs:
       - run: python -m pip check
       - name: Validate installed wheel and demo
         run: |
+          cp -r device "$RUNNER_TEMP/device"
           cp -r tests "$RUNNER_TEMP/embedded-tests"
           cp pyproject.toml "$RUNNER_TEMP/pyproject.toml"
           cd "$RUNNER_TEMP"

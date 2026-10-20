@@ -12,6 +12,11 @@ def parse_response(response: str) -> dict:
     """
     response = response.strip()
 
+    if response.startswith("INFO "):
+        import json
+
+        return {"type": "sensor_info", "info": json.loads(response[5:])}
+
     if response == "PONG":
         return {"type": "pong"}
 

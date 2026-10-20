@@ -11,7 +11,14 @@ def run(*args, cwd):
 
 
 @pytest.mark.parametrize(
-    "command", ["embedded-device", "embedded-train", "embedded-infer", "embedded-demo"]
+    "command",
+    [
+        "embedded-device",
+        "embedded-train",
+        "embedded-infer",
+        "embedded-demo",
+        "embedded-record-real",
+    ],
 )
 def test_installed_help(command, tmp_path):
     assert "usage:" in run(command, "--help", cwd=tmp_path).stdout

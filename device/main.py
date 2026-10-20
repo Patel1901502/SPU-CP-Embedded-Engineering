@@ -10,7 +10,7 @@ import time
 import config
 from machine import UART, Pin
 from protocol import handle_command
-from sensors import SensorSuite
+from sensors import SensorSuite, SimulatedSensorSuite
 
 
 def main():
@@ -22,9 +22,12 @@ def main():
     # Configure the status LED as a digital output controlled by host commands.
     led = Pin(config.LED_PIN, Pin.OUT)
 
-    # SensorSuite currently generates simulated values; its public API is kept
-    # hardware-independent so real drivers can be substituted later.
-    sensors = SensorSuite()
+    if config.SENSOR_BACKEND == "tmp102":
+        sensors = SensorSuite()
+    elif config.SENSOR_BACKEND == "simulated":
+        sensors = SimulatedSensorSuite()
+    else:
+        raise ValueError("Unknown SENSOR_BACKEND")
 
     # UART reads may return partial commands or multiple commands at once.
     # Accumulate bytes until a complete newline-delimited frame is available.

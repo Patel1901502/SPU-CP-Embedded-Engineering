@@ -12,7 +12,7 @@ def iter_samples(
 
     device needs only telemetry(); timing functions can be injected for tests.
     Collection stops between requests; a blocking transport may exceed duration.
-    Device error packets are skipped, matching the original collector.
+    Device error packets abort collection explicitly; partial CSV rows remain available.
     """
     if seconds < 0 or interval <= 0:
         raise ValueError("seconds must be nonnegative and interval positive")
@@ -23,6 +23,8 @@ def iter_samples(
             sample = {key: value for key, value in packet.items() if key != "type"}
             sample["timestamp"] = timestamp()
             yield sample
+        else:
+            raise RuntimeError("Telemetry failed: " + str(packet))
         remaining = deadline - clock()
         if remaining > 0:
             sleep(min(interval, remaining))

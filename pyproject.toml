@@ -26,6 +26,7 @@ packages = ["host", "ml", "tools"]
 
 [project.scripts]
 embedded-demo = "tools.demo:main"
+embedded-record-real = "tools.record_real:main"
 embedded-device = "tools.cli:main"
 embedded-train = "ml.train:main"
 embedded-infer = "ml.infer:main"
