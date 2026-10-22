@@ -134,3 +134,21 @@ def test_installed_pipeline_cli(tmp_path):
     )
     assert json.loads((tmp_path / "metrics.json").read_text())["true_positives"] == 5
     assert len(pd.read_csv(tmp_path / "scored.csv")) == 40
+
+
+def test_artifact_parameter_and_metadata_corruption(training):
+    model = train_model(training)
+    model.metadata["training_parameters"] = {"random_state": 999}
+    with pytest.raises(ValueError, match="training parameters"):
+        score_samples(model, training)
+    model = train_model(training)
+    del model.metadata["versions"]
+    with pytest.raises(ValueError, match="missing reproducibility metadata"):
+        score_samples(model, training)
+
+
+def test_single_row_batches_match_recording(training):
+    model = train_model(training)
+    session = InferenceSession(model)
+    rows = pd.concat([session.score(training.iloc[i : i + 1]) for i in range(20)])
+    pd.testing.assert_frame_equal(rows, score_samples(model, training.iloc[:20]))

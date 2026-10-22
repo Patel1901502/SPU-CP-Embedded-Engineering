@@ -8,7 +8,7 @@ from pathlib import Path
 import pandas as pd
 
 from ml.evaluate import evaluate_model
-from ml.model import save_model, train_model
+from ml.model import InferenceSession, load_model, save_model, score_samples, train_model
 
 
 def run_demo(output):
@@ -19,6 +19,13 @@ def run_demo(output):
     model = train_model(training)
     scored, metrics = evaluate_model(model, evaluation)
     save_model(model, output / "model.joblib")
+    restored = load_model(output / "model.joblib")
+    pd.testing.assert_frame_equal(scored, score_samples(restored, evaluation))
+    session = InferenceSession(restored)
+    batched = pd.concat(
+        [session.score(evaluation.iloc[i : i + 7]) for i in range(0, len(evaluation), 7)]
+    )
+    pd.testing.assert_frame_equal(scored, batched)
     (output / "model.metadata.json").write_text(json.dumps(model.metadata, indent=2) + "\n")
     (output / "metrics.json").write_text(json.dumps(metrics, indent=2) + "\n")
     scored.to_csv(output / "predictions.csv", index=False)
@@ -27,6 +34,8 @@ def run_demo(output):
     if faults != 5:
         raise RuntimeError(f"Demo detected {faults}/5 injected faults")
     summary = {
+        "reload_consistent": True,
+        "batch_consistent": True,
         "training_samples": len(training),
         "evaluation_samples": len(evaluation),
         "injected_faults_detected": faults,

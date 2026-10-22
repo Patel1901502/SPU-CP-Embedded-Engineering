@@ -12,3 +12,6 @@ build/
 *.egg-info/
 demo-output/
 .ruff_cache/
+
+# Reproducible fixtures must be included in source control.
+!tools/data/*.csv

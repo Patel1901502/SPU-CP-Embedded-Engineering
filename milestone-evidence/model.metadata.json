@@ -1,0 +1,30 @@
+{
+  "artifact_version": 1,
+  "feature_order": [
+    "temp_c",
+    "vibration",
+    "current_ma",
+    "temp_delta"
+  ],
+  "training_parameters": {
+    "bootstrap": false,
+    "contamination": 0.03,
+    "max_features": 1.0,
+    "max_samples": "auto",
+    "n_estimators": 100,
+    "n_jobs": 1,
+    "random_state": 42,
+    "verbose": 0,
+    "warm_start": false
+  },
+  "training_samples": 200,
+  "training_sha256": "6899e41512591db9296dabab29f5fc3967d5bb6e384bf187e758b524597f1410",
+  "temperature_delta_policy": "row-order; zero at recording start; carry explicit stream state",
+  "versions": {
+    "numpy": "2.3.5",
+    "pandas": "2.2.3",
+    "scikit-learn": "1.8.0",
+    "joblib": "1.5.3"
+  },
+  "python_version": "3.12.14"
+}

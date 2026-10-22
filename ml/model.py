@@ -47,6 +47,19 @@ def validate_artifact(model):
         raise ValueError("Legacy model lacks reproducibility metadata; retrain with embedded-train")
     if model.metadata.get("artifact_version") != ARTIFACT_VERSION:
         raise ValueError("Unsupported model artifact version")
+    required = {
+        "feature_order",
+        "training_parameters",
+        "training_samples",
+        "training_sha256",
+        "temperature_delta_policy",
+        "versions",
+        "python_version",
+    }
+    if not required.issubset(model.metadata):
+        raise ValueError("Model artifact is missing reproducibility metadata; retrain the model")
+    if model.metadata["training_parameters"] != model.estimator.get_params():
+        raise ValueError("Model training parameters disagree with saved metadata")
     if list(model.estimator.feature_names_in_) != model.metadata.get("feature_order"):
         raise ValueError("Model feature order disagrees with saved metadata")
     return model

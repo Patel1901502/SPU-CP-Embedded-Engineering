@@ -1,0 +1,8 @@
+{
+  "reload_consistent": true,
+  "batch_consistent": true,
+  "training_samples": 200,
+  "evaluation_samples": 40,
+  "injected_faults_detected": 5,
+  "total_anomalies": 5
+}

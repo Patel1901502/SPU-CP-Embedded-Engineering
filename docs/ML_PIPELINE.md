@@ -82,3 +82,15 @@ installed CLI CSV exports. `ruff check .` and `ruff format --check .` verify
 style. Existing CI installs a built wheel outside the checkout and runs the
 same suite. The hardware-free demo exports model metadata and evaluation
 metrics as well as model, predictions and summary.
+
+## Completion evidence
+
+The source now includes both seeded CSV fixtures; `.gitignore` explicitly retains
+`tools/data/*.csv` so future repository exports preserve them. The demo reloads
+the saved model and asserts exact DataFrame equality for full-recording and
+seven-row batch inference. Metadata validation also rejects missing reproducibility
+fields and estimator parameters that disagree with the saved configuration.
+
+`milestone-evidence/` contains the saved model, metadata, scored CSV, metrics,
+and consistency summary from the verified demo. Regenerate it with
+`embedded-demo --output milestone-evidence`.
