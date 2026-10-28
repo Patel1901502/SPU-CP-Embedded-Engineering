@@ -26,3 +26,19 @@ TMP102_ADDRESS = 0x48
 # calibrated_c = raw_c * TEMP_SCALE + TEMP_OFFSET_C
 TEMP_SCALE = 1.0
 TEMP_OFFSET_C = 0.0
+
+# Board composition settings. UART_OPTIONS may also specify tx/rx pins.
+UART_ID = 0
+UART_OPTIONS = {"baudrate": UART_BAUDRATE}
+UART_POLL_INTERVAL_MS = 10
+UART_MAX_COMMAND_BYTES = 256
+CPU_FREQ_HZ = 160_000_000
+
+# Optional linear analog temperature sensor (select SENSOR_BACKEND = "analog").
+# ESP32 ADC attenuation constant 3; adapt for your board's ADC implementation.
+ANALOG_TEMP_PIN = 34
+ANALOG_ADC_ATTEN = 3
+# Calibrate these against the board ADC and sensor before using measurements.
+ANALOG_FULL_SCALE_V = 3.3
+ANALOG_VOLTS_PER_C = 0.01
+ANALOG_ZERO_C_V = 0.5

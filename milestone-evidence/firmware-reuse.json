@@ -1,0 +1,10 @@
+{
+  "milestone": "Reusable Firmware Components",
+  "validation": {
+    "full_suite_before_final_board_factory_test": "49 passed, 4 hardware tests skipped",
+    "final_firmware_tests": "6 passed",
+    "ruff_check": "passed",
+    "ruff_format": "passed"
+  },
+  "hardware_validation": "Not performed; injected hardware tests only"
+}

@@ -1,8 +1,9 @@
 # Architecture
 
-`device/` is MicroPython firmware; it does not run in desktop CPython. It serves
-newline-delimited UART commands via `device/protocol.py` and a simulated sensor
-backend. `host/protocol.py` parses responses, `host/device.py` manages serial
+`device/` targets MicroPython. Its hardware-independent components are also tested
+on CPython with injected devices. `board.py` composes hardware, `service.py` frames
+UART requests, `protocol.py` handles commands, and `sensors.py` acquires samples
+from TMP102, analog temperature, or explicitly selected simulation backends. `host/protocol.py` parses responses, `host/device.py` manages serial
 ownership, and `host/telemetry.py` streams samples to CSV. `ml/features.py`
 centralizes feature order; `ml/model.py` fits and scores IsolationForest.
 Installed CLI scripts wrap these APIs. `embedded-demo` loads packaged synthetic

@@ -130,3 +130,65 @@ class SensorSuite:
         except (OSError, ValueError) as exc:
             self.driver = None  # Reconfigure after reconnect on the next request.
             raise SensorReadError("TMP102_READ_FAILED:" + str(exc))
+
+
+class AnalogSensorSuite:
+    """Linear analog temperature backend using an injected read_u16() ADC.
+
+    Voltage = raw / 65535 * full scale; temperature = (voltage - zero) / slope.
+    No TMP102 assumptions or synthetic fallback; uses the same command interface.
+    """
+
+    def __init__(self, adc, settings):
+        self.adc = adc
+        self.settings = settings
+        self.last_ms = None
+        values = (
+            settings.ANALOG_FULL_SCALE_V,
+            settings.ANALOG_VOLTS_PER_C,
+            settings.ANALOG_ZERO_C_V,
+            settings.TEMP_SCALE,
+            settings.TEMP_OFFSET_C,
+        )
+        if not all(math.isfinite(value) for value in values):
+            raise ValueError("Analog calibration must be finite")
+        if (
+            settings.ANALOG_FULL_SCALE_V <= 0
+            or settings.ANALOG_VOLTS_PER_C <= 0
+            or settings.TEMP_SCALE <= 0
+            or settings.SAMPLE_PERIOD_MS < 0
+        ):
+            raise ValueError("Invalid analog configuration")
+
+    def info(self):
+        s = self.settings
+        return {
+            "sensor": "analog",
+            "source": "hardware",
+            "units": "degC",
+            "sample_period_ms": s.SAMPLE_PERIOD_MS,
+            "full_scale_v": s.ANALOG_FULL_SCALE_V,
+            "volts_per_c": s.ANALOG_VOLTS_PER_C,
+            "zero_c_v": s.ANALOG_ZERO_C_V,
+            "temp_scale": s.TEMP_SCALE,
+            "temp_offset_c": s.TEMP_OFFSET_C,
+        }
+
+    def read(self):
+        now = time.ticks_ms()
+        s = self.settings
+        if self.last_ms is not None and time.ticks_diff(now, self.last_ms) < s.SAMPLE_PERIOD_MS:
+            raise SensorReadError("RATE_LIMIT")
+        self.last_ms = now
+        try:
+            raw = self.adc.read_u16()
+            if not 0 <= raw <= 65535:
+                raise ValueError("ADC_OUT_OF_RANGE")
+            voltage = raw / 65535 * s.ANALOG_FULL_SCALE_V
+            temperature = (voltage - s.ANALOG_ZERO_C_V) / s.ANALOG_VOLTS_PER_C
+            calibrated = temperature * s.TEMP_SCALE + s.TEMP_OFFSET_C
+            if not math.isfinite(calibrated):
+                raise ValueError("INVALID_CALIBRATION_RESULT")
+            return {"temp_c": round(calibrated, 4), "raw_temp_c": temperature}
+        except (OSError, ValueError) as exc:
+            raise SensorReadError("ANALOG_READ_FAILED:" + str(exc))

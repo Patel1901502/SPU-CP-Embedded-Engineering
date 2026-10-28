@@ -7,11 +7,12 @@ hardware reaches a known state before the application starts.
 
 import gc
 
+import config
 import machine
 
 # Run the ESP32 CPU at 160 MHz. This is a reasonable balance between
 # application performance and power consumption for this demonstration.
-machine.freq(160_000_000)
+machine.freq(config.CPU_FREQ_HZ)
 
 # Reclaim any temporary objects created while the MicroPython runtime starts.
 # Doing this before main.py leaves the largest practical heap for the app.

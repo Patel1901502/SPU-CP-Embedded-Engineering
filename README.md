@@ -64,7 +64,7 @@ on the PC (`python -m pip install mpremote`). Copy each firmware file explicitly
 so the command also works in PowerShell:
 
 ```sh
-mpremote connect COM5 cp device/boot.py device/config.py device/main.py device/protocol.py device/sensors.py :
+mpremote connect COM5 cp device/boot.py device/config.py device/main.py device/board.py device/service.py device/protocol.py device/sensors.py :
 ```
 
 Reset the board and close mpremote before testing. Confirm the LED pin in
@@ -118,3 +118,8 @@ See [wiring, calibration, sampling and real capture](docs/REAL_SENSOR.md).
 Real hardware emits only `temp_c` and `raw_temp_c`; no synthetic vibration or
 current values are added. The existing three-channel ML demo remains synthetic
 and cannot consume temperature-only captures without adapting its features.
+
+## Reusable firmware components
+
+See [firmware reuse](docs/FIRMWARE_REUSE.md) for dependency injection, board configuration,
+and the optional analog temperature backend.
